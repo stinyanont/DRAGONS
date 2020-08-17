@@ -26,6 +26,7 @@ def makeProcessedFlat(p):
     p.biasCorrect()
     p.ADUToElectrons()
     p.addVAR(poisson_noise=True)
+    p.adjustBkgLevel()
     p.stackFlats()
     p.normalizeFlat()
     p.makeIRAFCompatible()

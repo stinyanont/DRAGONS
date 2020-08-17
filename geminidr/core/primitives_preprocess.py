@@ -78,6 +78,16 @@ class Preprocess(PrimitivesBASE):
             ad.update_filename(suffix=suffix, strip=True)
         return adinputs
 
+    def adjustBkgLevel(self, adinputs=None, **params):
+        log = self.log
+        log.debug(gt.log_message("primitive", self.myself(), "starting"))
+
+        if not params['correct']:
+            print('not applying correction')
+            return adinputs
+        else:
+            return _correct_qe_with_bkg_level(adinputs)
+
     def ADUToElectrons(self, adinputs=None, suffix=None):
         """
         This primitive will convert the units of the pixel data extensions
@@ -674,7 +684,8 @@ class Preprocess(PrimitivesBASE):
             ad.update_filename(suffix=suffix, strip=True)
         return adinputs
 
-    def flatCorrect(self, adinputs=None, suffix=None, flat=None, do_flat=True):
+    def flatCorrect(self, adinputs=None, suffix=None, flat=None, do_flat=True,
+                    qe_correct=False):
         """
         This primitive will divide each SCI extension of the inputs by those
         of the corresponding flat. If the inputs contain VAR or DQ frames,
@@ -710,6 +721,12 @@ class Preprocess(PrimitivesBASE):
         else:
             flat_list = flat
 
+        if qe_correct:
+            print('apply QE correction')
+            adinputs = _correct_qe_with_bkg_level(adinputs)
+        else:
+            print('no QE correction')
+
         # Provide a flatfield AD object for every science frame
         for ad, flat in zip(*gt.make_lists(adinputs, flat_list,
                                            force_ad=True)):
@@ -727,7 +744,7 @@ class Preprocess(PrimitivesBASE):
                     continue
                 else:
                     raise OSError("No processed flat listed for {}".
-                                   format(ad.filename))
+                                  format(ad.filename))
 
             # Check the inputs have matching filters, binning, and shapes
             try:
@@ -737,7 +754,7 @@ class Preprocess(PrimitivesBASE):
                 # data (e.g., for GMOS, this allows a full frame flat to
                 # be used for a CCD2-only science frame.
                 flat = gt.clip_auxiliary_data(adinput=ad,
-                                    aux=flat, aux_type="cal")
+                                              aux=flat, aux_type="cal")
                 # Check again, but allow it to fail if they still don't match
                 gt.check_inputs_match(ad, flat)
 
@@ -1519,3 +1536,39 @@ class Preprocess(PrimitivesBASE):
             gt.mark_history(ad, primname=self.myself(), keyword=timestamp_key)
             ad.update_filename(suffix=sfx, strip=True)
         return adinputs
+
+
+def _correct_qe_with_bkg_level(adinputs):
+    from astropy.stats import sigma_clipped_stats
+    print()
+    for ad in adinputs:
+        means = []
+        print('before:')
+        for i in range(0, len(ad), 4):
+            data = np.ma.array(np.stack(ad[i:i + 4].data),
+                               mask=np.stack(ad[i:i + 4].mask) > 0)
+            data = np.ma.masked_invalid(data)
+            mean, med, std = sigma_clipped_stats(data.compressed())
+            means.append(mean)
+            print(f'- {i} : {mean=:.3f} {med=:.3f} {std=:.3f}')
+
+        # for i in range(4):
+        #     ext = ad[i]
+        #     ext *= means[1] / means[0]
+        #     ext = ad[i+8]
+        #     ext *= means[1] / means[2]
+        ad[:4].multiply(means[1] / means[0])
+        ad[8:].multiply(means[1] / means[2])
+        with open(ad.filename.split('_')[0] + '_qecorr.txt', mode='w') as f:
+            f.write('{:f} {:f}'
+                    .format(means[1] / means[0], means[1] / means[2]))
+
+        print('after:')
+        for i in range(0, len(ad), 4):
+            data = np.ma.array(np.stack(ad[i:i + 4].data),
+                               mask=np.stack(ad[i:i + 4].mask) > 0)
+            data = np.ma.masked_invalid(data)
+            mean, med, std = sigma_clipped_stats(data.compressed())
+            print(f'- {i} : {mean=:.3f} {med=:.3f} {std=:.3f}')
+
+    return adinputs

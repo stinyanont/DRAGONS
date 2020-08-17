@@ -11,6 +11,11 @@ def replace_valueCheck(value):
 class addObjectMaskToDQConfig(config.Config):
     suffix = config.Field("Filename suffix", str, "_objectMaskAdded", optional=True)
 
+class adjustBkgLevelConfig(config.Config):
+    suffix = config.Field("Filename suffix", str,
+                          "_backgroundCorrected", optional=True)
+    correct = config.Field("Apply correction?", bool, False)
+
 class ADUToElectronsConfig(config.Config):
     suffix = config.Field("Filename suffix", str, "_ADUToElectrons", optional=True)
 
@@ -72,6 +77,7 @@ class flatCorrectConfig(config.Config):
     suffix = config.Field("Filename suffix", str, "_flatCorrected", optional=True)
     flat = config.ListField("Flatfield frame", (str, AstroData), None, optional=True, single=True)
     do_flat = config.Field("Perform flatfield correction?", bool, True)
+    qe_correct = config.Field("Apply QE correction?", bool, False)
 
 class nonlinearityCorrectConfig(config.Config):
     suffix = config.Field("Filename suffix", str, "_nonlinearityCorrected", optional=True)

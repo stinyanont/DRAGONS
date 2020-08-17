@@ -1268,13 +1268,14 @@ def make_lists(*args, **kwargs):
         for x in set(itertools.chain(*ret_value)):
             try:
                 ad_map_dict.update({x: x if isinstance(x, astrodata.AstroData)
-                                        or x is None else astrodata.open(x)})
-            except:
+                                    or x is None else astrodata.open(x)})
+            except Exception:
                 ad_map_dict.update({x: None})
                 log.warning(f"Cannot open file {x}")
         ret_value = [[ad_map_dict[x] for x in List] for List in ret_value]
 
     return ret_value
+
 
 @handle_single_adinput
 def mark_history(adinput=None, keyword=None, primname=None, comment=None):
