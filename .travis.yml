@@ -1,15 +1,21 @@
 os: linux
 dist: xenial
-language: python
-python:
-  # We don't actually use the Travis Python, but this keeps it organized.
-  - "3.7"
+language: generic
+
+jobs:
+  include:
+    - name: "Unit Tests using Python 3.6"
+      env: TOX_ENV="py36-unit"
+    - name: "Unit Tests using Python 3.7"
+      env: TOX_ENV="py37-unit"
+    - name: "Unit Tests using Python 3.8"
+      env: TOX_ENV="py38-unit"
+
 env:
   global:
     - DRAGONS_TEST="$HOME/dragons_tests/"
+
 install:
-  # We do this conditionally because it saves us some downloading if the
-  # version is the same.
   - wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
   - bash miniconda.sh -b -p $HOME/miniconda
   - source "$HOME/miniconda/etc/profile.d/conda.sh"
@@ -28,8 +34,4 @@ install:
   - conda info -a
 
 script:
-  - tox -e py37-unit -v
-
-after_success:
-  - pip install codecov
-  - codecov
+  - tox -e $TOX_ENV -v
