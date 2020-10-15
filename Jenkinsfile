@@ -17,8 +17,8 @@ pipeline {
     agent any
 
     triggers {
-        // pollSCM('MIN HOUR DoM MONTH DoW')
-        pollSCM('H H/4 * * *')  // Polls Source Code Manager every four hours
+        // Polls Source Code Manager every four hours
+        pollSCM('H H/4 * * *')
     }
 
     options {
@@ -109,7 +109,7 @@ pipeline {
                         checkout scm
                         sh '.jenkins/scripts/setup_agent.sh'
                         echo "Running tests with Python 3.7"
-                        sh 'tox -e py37-unit -v -- --basetemp=${DRAGONS_TEST_OUT} --junit-xml reports/unittests_results.xml'
+                        sh 'tox -e py37-unit -v -- --basetemp=${DRAGONS_TEST_OUT}/${env.BUILD_TAG} --junit-xml reports/unittests_results.xml'
                         echo "Reportint coverage to CodeCov"
                         sh 'tox -e codecov -- -F unit'
                     }
@@ -119,6 +119,13 @@ pipeline {
                                 allowEmptyResults: true,
                                 testResults: 'reports/*_results.xml'
                             )
+                        }
+                        success {
+                            echo "Removing output folder: ${DRAGONS_TEST_OUT}/${env.BUILD_ID}"
+                            sh  """
+                                cd ${DRAGONS_TEST_OUT}
+                                rm -Rf ${env.BUILD_ID}
+                                """
                         }
                     }
                 }
