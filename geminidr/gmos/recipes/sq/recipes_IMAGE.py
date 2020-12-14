@@ -26,6 +26,7 @@ def reduce(p):
     p.addVAR(poisson_noise=True)
     p.getProcessedFlat()
     p.flatCorrect()
+    p.adjustBkgLevel()
     p.getProcessedFringe()
     p.fringeCorrect()
     p.mosaicDetectors()
@@ -97,4 +98,3 @@ def makeIRAFCompatible(p):
     p.makeIRAFCompatible()
     p.writeOutputs()
     return
-

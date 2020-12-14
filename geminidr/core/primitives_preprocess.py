@@ -684,8 +684,7 @@ class Preprocess(PrimitivesBASE):
             ad.update_filename(suffix=suffix, strip=True)
         return adinputs
 
-    def flatCorrect(self, adinputs=None, suffix=None, flat=None, do_flat=True,
-                    qe_correct=False):
+    def flatCorrect(self, adinputs=None, suffix=None, flat=None, do_flat=True):
         """
         This primitive will divide each SCI extension of the inputs by those
         of the corresponding flat. If the inputs contain VAR or DQ frames,
@@ -720,12 +719,6 @@ class Preprocess(PrimitivesBASE):
             flat_list = self._get_cal(adinputs, 'processed_flat')
         else:
             flat_list = flat
-
-        if qe_correct:
-            print('apply QE correction')
-            adinputs = _correct_qe_with_bkg_level(adinputs)
-        else:
-            print('no QE correction')
 
         # Provide a flatfield AD object for every science frame
         for ad, flat in zip(*gt.make_lists(adinputs, flat_list,

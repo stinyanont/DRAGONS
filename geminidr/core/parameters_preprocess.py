@@ -77,7 +77,6 @@ class flatCorrectConfig(config.Config):
     suffix = config.Field("Filename suffix", str, "_flatCorrected", optional=True)
     flat = config.ListField("Flatfield frame", (str, AstroData), None, optional=True, single=True)
     do_flat = config.Field("Perform flatfield correction?", bool, True)
-    qe_correct = config.Field("Apply QE correction?", bool, False)
 
 class nonlinearityCorrectConfig(config.Config):
     suffix = config.Field("Filename suffix", str, "_nonlinearityCorrected", optional=True)
