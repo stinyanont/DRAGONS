@@ -86,7 +86,7 @@ class Preprocess(PrimitivesBASE):
             print('not applying correction')
             return adinputs
         else:
-            return _correct_qe_with_bkg_level(adinputs)
+            return _correct_qe_with_bkg_level(adinputs, **params)
 
     def ADUToElectrons(self, adinputs=None, suffix=None):
         """
@@ -1531,8 +1531,9 @@ class Preprocess(PrimitivesBASE):
         return adinputs
 
 
-def _correct_qe_with_bkg_level(adinputs):
-    from astropy.stats import sigma_clipped_stats
+def _correct_qe_with_bkg_level(adinputs, corr_suffix=None, suffix=None, **kw):
+    from astropy.stats import sigma_clipped_stats, SigmaClip
+    from photutils import SExtractorBackground
     print()
     for ad in adinputs:
         means = []
@@ -1542,19 +1543,16 @@ def _correct_qe_with_bkg_level(adinputs):
                                mask=np.stack(ad[i:i + 4].mask) > 0)
             data = np.ma.masked_invalid(data)
             mean, med, std = sigma_clipped_stats(data.compressed())
-            means.append(mean)
-            print(f'- {i} : {mean=:.3f} {med=:.3f} {std=:.3f}')
+            bkg = SExtractorBackground(SigmaClip(sigma=3.0))
+            bkgval = bkg.calc_background(data.compressed())
+            means.append(bkgval)
+            print(f'- {i} : {mean=:.3f} {med=:.3f} {std=:.3f} {bkgval=:.3f}')
 
-        # for i in range(4):
-        #     ext = ad[i]
-        #     ext *= means[1] / means[0]
-        #     ext = ad[i+8]
-        #     ext *= means[1] / means[2]
         ad[:4].multiply(means[1] / means[0])
         ad[8:].multiply(means[1] / means[2])
-        with open(ad.filename.split('_')[0] + '_qecorr.txt', mode='w') as f:
-            f.write('{:f} {:f}'
-                    .format(means[1] / means[0], means[1] / means[2]))
+
+        with open(ad.filename.split('_')[0] + corr_suffix, mode='w') as f:
+            f.write(f'{means[1] / means[0]:f} {means[1] / means[2]:f}')
 
         print('after:')
         for i in range(0, len(ad), 4):
@@ -1562,6 +1560,10 @@ def _correct_qe_with_bkg_level(adinputs):
                                mask=np.stack(ad[i:i + 4].mask) > 0)
             data = np.ma.masked_invalid(data)
             mean, med, std = sigma_clipped_stats(data.compressed())
-            print(f'- {i} : {mean=:.3f} {med=:.3f} {std=:.3f}')
+            bkg = SExtractorBackground(SigmaClip(sigma=3.0))
+            bkgval = bkg.calc_background(data.compressed())
+            print(f'- {i} : {mean=:.3f} {med=:.3f} {std=:.3f} {bkgval=:.3f}')
+
+        ad.update_filename(suffix=suffix,  strip=True)
 
     return adinputs
