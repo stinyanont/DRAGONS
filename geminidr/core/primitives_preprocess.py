@@ -86,6 +86,9 @@ class Preprocess(PrimitivesBASE):
             print('not applying correction')
             return adinputs
         else:
+            if params['mask_sources']:
+                adinputs = self.detectSources(
+                    adinputs, **self._inherit_params(params, "detectSources"))
             return _correct_qe_with_bkg_level(adinputs, **params)
 
     def ADUToElectrons(self, adinputs=None, suffix=None):
@@ -1542,6 +1545,16 @@ def _correct_qe_with_bkg_level(adinputs, corr_suffix=None, suffix=None, **kw):
             data = np.ma.array(np.stack(ad[i:i + 4].data),
                                mask=np.stack(ad[i:i + 4].mask) > 0)
             data = np.ma.masked_invalid(data)
+
+            try:
+                # Use OBJMASK if possible
+                objmask = np.stack([ad[j].OBJMASK for j in range(i, i+4)]) > 0
+            except AttributeError:
+                pass
+            else:
+                print('Using OBJMASK')
+                data.mask |= objmask
+
             mean, med, std = sigma_clipped_stats(data.compressed())
             bkg = SExtractorBackground(SigmaClip(sigma=3.0))
             bkgval = bkg.calc_background(data.compressed())

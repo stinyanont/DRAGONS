@@ -17,6 +17,7 @@ class adjustBkgLevelConfig(config.Config):
     correct = config.Field("Apply correction?", bool, False)
     corr_suffix = config.Field("Suffix for the correction file", str,
                                "_qecorr.txt", optional=True)
+    mask_sources = config.Field("Mask sources?", bool, False)
 
 class ADUToElectronsConfig(config.Config):
     suffix = config.Field("Filename suffix", str, "_ADUToElectrons", optional=True)
