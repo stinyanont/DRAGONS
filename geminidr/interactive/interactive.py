@@ -265,7 +265,8 @@ class PrimitiveVisualizer(ABC):
 
                 widget = build_text_slider(doc, value, step, start, end,
                                            obj=self.config, attr=pname,
-                                           slider_width=slider_width)
+                                           slider_width=slider_width,
+                                           config=self.config)
 
                 self.widgets[pname] = widget.children[0]
             elif hasattr(field, 'allowed'):
@@ -339,9 +340,9 @@ class PrimitiveVisualizer(ABC):
         return handler
 
 
-def build_text_slider(title, value, step, min_value, max_value, obj=None,
+def build_text_slider(title, value=None, step=1, min_value=None, max_value=None, obj=None,
                       attr=None, handler=None, throttled=False,
-                      slider_width=256, config=None, allow_none=False):
+                      slider_width=256, config=None, allow_none=None):
     """
     Make a slider widget to use in the bokeh interface.
 
@@ -373,25 +374,43 @@ def build_text_slider(title, value, step, min_value, max_value, obj=None,
         :class:`~bokeh.models.layouts.Row` bokeh Row component with the interface inside
 
     """
-    if min_value is None and config is not None:
+    # Pull out the field for later use
+    if config and attr:
         field = config._fields.get(attr, None)
-        if field is not None:
-            if hasattr(field, 'min'):
-                min_value = field.min
-    if max_value is None and config is not None:
-        field = config._fields.get(attr, None)
-        if field is not None:
-            if hasattr(field, 'max'):
-                max_value = field.max
+    else:
+        field = None
 
+    # If attr is defined with a config and no obj is specified, we want to update the config
+    if obj is None and attr is not None and config is not None:
+        obj = config
+    # If value is not set and we have an obj and attr, extract the current value to start with
+    if value is None and obj is not None and attr is not None:
+        value = obj.get(attr, None)
+    # If no min_value is set and we have the config, get it from there
+    if min_value is None and field is not None:
+        if hasattr(field, 'min'):
+            min_value = field.min
+    # If no max_value is set and we have the config, get it from there
+    if max_value is None and field is not None:
+        if hasattr(field, 'max'):
+            max_value = field.max
+
+    # Expand the slider depending on the initial value and min/max
     start = min(value, min_value) if min_value is not None else min(value, 0)
     end = max(value, max_value) if max_value is not None else max(10, value*2)
 
+    # Infer allow_none from config if needed
+    if allow_none is None:
+        if field is not None and hasattr(field, 'optional'):
+            allow_none = field.optional
+        else:
+            allow_none = True
+
     # trying to convince int-based sliders to behave
     is_float = not isinstance(value, int) or \
-               (min_value is not None and not isinstance(min_value, int)) or \
-               (max_value is not None and not isinstance(max_value, int))
-    if step is None:
+        (min_value is not None and not isinstance(min_value, int)) or \
+        (max_value is not None and not isinstance(max_value, int))
+    if step is None or step <= 0:
         if is_float:
             step = 0.1
         else:
