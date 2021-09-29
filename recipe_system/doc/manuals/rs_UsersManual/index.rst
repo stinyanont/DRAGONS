@@ -7,12 +7,13 @@
 Recipe System User Manual
 *************************
 
-.. admonition:: Document ID
+.. .. admonition:: Document ID
 
-   PIPE-USER-109_RSUserManual
+..    PIPE-USER-109_RSUserManual
 
 .. toctree::
-   :maxdepth: 2
+   :numbered:
+   :maxdepth: 3
    :caption: Table of Contents
 
    intro
@@ -24,20 +25,23 @@ Recipe System User Manual
    supptools
    ack
 
-.. toctree::
-   :numbered:
-   :maxdepth: 1
-   :caption: Appendices
+.. Appendices
+.. ==========
 
-   appendices/full_commandline_example
-   appendices/full_api_example
-   appendices/glossary
+.. .. toctree::
+..    :numbered:
+..    :maxdepth: 1
+..    :caption: Appendices
 
-Indices and tables
-==================
+..    appendices/full_commandline_example
+..    appendices/full_api_example
+..    appendices/glossary
 
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+.. Indices and tables
+.. ==================
+
+.. * :ref:`genindex`
+.. * :ref:`modindex`
+.. * :ref:`search`
 
 .. .. todolist::

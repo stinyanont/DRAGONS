@@ -3,8 +3,9 @@
    contain the root `toctree` directive.
    Manually edited by KRA, 08-05-2017.
 
+********************************
 Recipe System Programmers Manual
-================================
+********************************
 
 .. admonition:: Document ID
 
@@ -19,6 +20,9 @@ Recipe System Programmers Manual
    mappers
    interfaces
    ack
+
+Appendices
+==========
 
 .. toctree::
    :maxdepth: 1

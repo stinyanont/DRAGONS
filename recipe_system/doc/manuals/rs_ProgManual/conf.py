@@ -27,10 +27,10 @@ print((' ' + os.getcwd()))
 
 if on_rtd:
     print(' Adding the following path to the sys.path')
-    print((' ' + os.path.abspath('./../../../')))
-    sys.path.insert(0, os.path.abspath('./../../../'))
+    print((' ' + os.path.abspath('./../../../../')))
+    sys.path.insert(0, os.path.abspath('./../../../../'))
 else:
-    sys.path.insert(0, os.path.abspath('./../../../'))
+    sys.path.insert(0, os.path.abspath('./../../../../'))
 
 
 # -- Project information -----------------------------------------------------
