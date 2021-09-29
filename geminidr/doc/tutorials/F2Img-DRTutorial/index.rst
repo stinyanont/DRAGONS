@@ -1,7 +1,7 @@
 
 
-DRAGONS - Flamingos 2 Data Reduction Tutorial
-=============================================
+Tutorial Series - Flamingos 2 Data Reduction Tutorial
+=====================================================
 
 .. admonition:: Document ID
 
@@ -33,11 +33,3 @@ WebPage <https://www.gemini.edu/sciops/instruments/flamingos2/>`_ and in the
    appendices/01_goa_download.rst
 
 
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
-
-.. todolist::

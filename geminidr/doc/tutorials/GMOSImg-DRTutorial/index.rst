@@ -1,7 +1,7 @@
 
 
-DRAGONS - GMOS Data Reduction Tutorial
-======================================
+Tutorial Series - GMOS Data Reduction Tutorial
+==============================================
 
 .. admonition:: Document ID
 
@@ -31,13 +31,3 @@ WebPage <https://www.gemini.edu/sciops/instruments/gmos/>`_ and in the
 
    appendices/01_goa_download
    appendices/02_fringe_correction_tables
-
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
-
-.. todolist::

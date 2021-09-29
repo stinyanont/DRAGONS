@@ -20,13 +20,3 @@ Tutorial Series - GNIRS Imaging Data Reduction with DRAGONS
    04_keyhole_api
    05_tips_and_tricks
    06_issues_and_limitations
-
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
-
-.. todolist::

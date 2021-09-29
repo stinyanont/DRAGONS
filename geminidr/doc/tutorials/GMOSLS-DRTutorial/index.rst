@@ -3,8 +3,8 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to Tutorial Series - GMOS Longslit Data Reduction with DRAGONS
-======================================================================
+Tutorial Series - GMOS Longslit Data Reduction with DRAGONS
+===========================================================
 
 .. admonition:: Document ID
 
@@ -21,13 +21,3 @@ Welcome to Tutorial Series - GMOS Longslit Data Reduction with DRAGONS
    04_dithered_api
    05_tips_and_tricks
    06_issues_and_limitations
-
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
-
-.. todolist::

@@ -3,8 +3,8 @@
    contain the root `toctree` directive.
    Manually edited by BQ <Feb 5 2019>
 
-DRAGONS - GSAOI Data Reduction Tutorial
-=======================================
+Tutorial Series - GSAOI Data Reduction Tutorial
+===============================================
 
 .. admonition:: Document ID
 
@@ -26,15 +26,3 @@ DRAGONS - GSAOI Data Reduction Tutorial
    :caption: Appendices
 
    appendices/01_goa_download.rst
-
-
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
-
-.. todolist::
-

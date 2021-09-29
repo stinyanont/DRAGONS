@@ -21,13 +21,3 @@ Tutorial Series - NIRI Imaging Data Reduction with DRAGONS
    04_extended_api
    05_tips_and_tricks
    06_issues_and_limitations
-   
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
-
-.. todolist::
