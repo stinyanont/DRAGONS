@@ -7,9 +7,9 @@
 Recipe System User Manual
 *************************
 
-.. .. admonition:: Document ID
+.. admonition:: Document ID
 
-..    PIPE-USER-109_RSUserManual
+   PIPE-USER-109_RSUserManual
 
 .. toctree::
    :numbered:

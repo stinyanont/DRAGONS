@@ -3,13 +3,13 @@
    contain the root `toctree` directive.
    Manually edited by OO September 2021
 
-#################
-DRAGONS Tutorials
-#################
+###################
+Tutorial Collection
+###################
 
 .. admonition:: Document ID
 
-   PIPE-USER-109_Tutorials
+   PIPE-USER-125_TutorialCollection
 
 The DRAGONS Tutorials are divided up by instrument.  Select from the list below for
 the tutorial for your preferred instrument, or use the sidebar navigation.

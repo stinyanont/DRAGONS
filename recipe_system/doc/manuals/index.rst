@@ -9,7 +9,7 @@ Recipe System Manual
 
 .. admonition:: Document ID
 
-   PIPE-USER-109_RecipeSystemManual
+   PIPE-USER-126_RSMasterManual
 
 The DRAGONS Recipe System documentation is divided into two parts.  One is a manual for end-users working with
 data reduction.  The other is a deeper dive of the internals aimed at developers.
