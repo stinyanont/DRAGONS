@@ -349,11 +349,6 @@ class Spect(PrimitivesBASE):
             # Determine whether we're producing a single-extension AD
             # or keeping the number of extensions as-is
             if len_arc == 1:
-
-                distortion_models *= len_ad
-                wave_models *= len_ad
-                wave_frames *= len_ad
-
                 # Save spatial WCS from input ext we're transforming WRT:
                 ref_idx = transform.find_reference_extension(ad)
                 sky_models = [
@@ -369,7 +364,28 @@ class Spect(PrimitivesBASE):
                     # same distortion correction to each input extension.
                     geotable = import_module('.geometry_conf', self.inst_lookups)
                     transform.add_mosaic_wcs(ad, geotable)
+
+                    additional_shapes = []
+                    additional_transforms = []
+                    dg = transform.DataGroup()
+                    for ext, detsec in zip(ad, ad_detsec):
+                        t_mosaic = ext.wcs.get_transform(ext.wcs.input_frame, 'mosaic')
+                        dg.append(ext.nddata, t_mosaic)
+                        if ext.dispersion_axis() == 1:
+                            shape = ((arc_detsec.y2 - arc_detsec.y1) // ybin, ext.shape[1])
+                            t = (models.Identity(1) & models.Shift((arc_detsec.y1 - detsec.y1) // ybin)) | t_mosaic
+                        else:
+                            shape = (ext.shape[0], (arc_detsec.x2 - arc_detsec.x1) // xbin)
+                            t = (models.Shift((arc_detsec.x1 - detsec.x1) // xbin) & models.Identity(1)) | t_mosaic
+                        if shape != ext.shape:
+                            additional_shapes.append(shape)
+                            additional_transforms.append(t)
+                    dg.calculate_output_shape()
+                    sci_origin = dg.origin
+                    dg.calculate_output_shape(additional_shapes, additional_transforms)
+
                     for ext in ad:
+                        t = ext.wcs.get_transform(ext.wcs.input_frame, "mosaic")
                         # TODO: use insert_frame() method
                         new_pipeline = []
                         for item in ext.wcs.pipeline:
@@ -381,66 +397,24 @@ class Spect(PrimitivesBASE):
                                 new_pipeline.append(item)
                         ext.wcs = gWCS(new_pipeline)
 
-                    # We need to consider the different pixel frames of the
-                    # science and arc. The input->mosaic transform of the
-                    # science maps to the default pixel space, but the arc
-                    # will have had an origin shift before the distortion
-                    # correction was calculated.
-                    shifts = [c2 - c1 for c1, c2 in zip(np.array(ad_detsec).min(axis=0),
-                                                        arc_detsec)]
-                    xoff1, yoff1 = shifts[0] / xbin, shifts[2] / ybin  # x1, y1
-                    if xoff1 or yoff1:
-                        log.debug(f"Found a shift of ({xoff1},{yoff1}) "
-                                  f"pixels between {ad.filename} and the "
-                                  f"calibration {arc.filename}")
-                    shifts = [c2 - c1 for c1, c2 in zip(np.array(ad_detsec).max(axis=0),
-                                                        arc_detsec)]
-                    xoff2, yoff2 = shifts[1] / xbin, shifts[3] / ybin  # x2, y2
-                    nzeros = [xoff1, xoff2, yoff1, yoff2].count(0)
-                    if nzeros < 2:
-                        raise ValueError("I don't know how to process the "
-                                         f"offsets between {ad.filename} "
-                                         f"and {arc.filename}")
+                    if any(dg.origin):
+                        origin_shift = reduce(Model.__and__, [models.Shift(-origin)
+                                              for origin in dg.origin[::-1]])
+                        for ext in ad:
+                            ext.wcs.insert_transform('mosaic', origin_shift, after=True)
 
-                    arc_ext_shapes = [(ext.shape[0] - yoff1 + yoff2,
-                                       ext.shape[1] - xoff1 + xoff2) for ext in ad]
-                    arc_corners = np.concatenate([transform.get_output_corners(
-                        ext.wcs.get_transform(ext.wcs.input_frame, 'mosaic'),
-                        input_shape=arc_shape, origin=(yoff1, xoff1))
-                        for ext, arc_shape in zip(ad, arc_ext_shapes)], axis=1)
-                    arc_origin = tuple(np.ceil(min(corners)) for corners in arc_corners)
+                    offsets = [o1 - o2 for o1, o2 in zip(sci_origin, dg.origin)]
 
-                    # So this is what was applied to the ARC to get the
-                    # mosaic frame to its pixel frame, in which the distortion
-                    # correction model was calculated. Convert coordinates
-                    # from python order to Model order.
-                    origin_shift = reduce(Model.__and__, [models.Shift(-origin)
-                                          for origin in arc_origin[::-1]])
-
-                    for ext in ad:
-                        ext.wcs.insert_transform('mosaic', origin_shift, after=True)
-
-                    # ARC and AD aren't the same size
-                    if nzeros < 4:
-                        ad_corners = np.concatenate([transform.get_output_corners(
-                            ext.wcs.get_transform(ext.wcs.input_frame, 'mosaic'),
-                            input_shape=ext.shape) for ext in ad], axis=1)
-                        ad_origin = tuple(np.ceil(min(corners)) for corners in ad_corners)
-
-                        # But a full-frame ARC and subregion AD may have different
-                        # origin shifts. We only care about the one in the
-                        # wavelength direction, since we need the AD to be on the
-                        # same pixel basis before applying the new wave_model
-                        offsets = tuple(o_ad - o_arc
-                                        for o_ad, o_arc in zip(ad_origin, arc_origin))[::-1]
-                        # len(arc)=1 so we only have one wave_model, but need to
-                        # update the entry in the list, which gets used later
-                        if wave_model is not None:
-                            offset = offsets[ext.dispersion_axis()-1]
-                            if offset != 0:
-                                wave_model.name = None
-                                wave_models[0] = models.Shift(offset) | wave_model
-                                wave_models[0].name = 'WAVE'
+                    sky_offset = offsets[ext.dispersion_axis()-1]
+                    if sky_offset != 0:
+                        for ext in ad:
+                            if ext.dispersion_axis() == 1:
+                                sky_shift = models.Identity(1) & models.Shift(-sky_offset)
+                            else:
+                                sky_shift = models.Shift(-sky_offset) & models.Identity(1)
+                            ext.wcs.insert_transform('distortion_corrected', sky_shift, after=False)
+                    wave_models *= len_ad
+                    wave_frames *= len_ad
 
                 else:
                     # Single-extension AD, with single Transform
@@ -1054,7 +1028,6 @@ class Spect(PrimitivesBASE):
 
         adoutputs = []
         for ad in adinputs:
-
             # We don't check for a timestamp since it's not unreasonable
             # to do multiple distortion corrections on a single AD object
 
@@ -1082,19 +1055,33 @@ class Spect(PrimitivesBASE):
                 new_pipeline = ext.wcs.pipeline[:idx-1]
                 prev_frame, m_distcorr = ext.wcs.pipeline[idx-1]
 
-                if hasattr(m_distcorr, 'left') and (
-                    isinstance(m_distcorr.left, CompoundModel) and
-                    m_distcorr.left.n_outputs == 2 and
-                    all(isinstance(m, models.Shift) for m in m_distcorr.left)
-                ):
-                    m_dummy = m_distcorr.left | models.Identity(2)
+                # The model must have a Mapping prior to the Chebyshev2D model(s)
+                # since coordinates have to be duplicated. Find this
+                for i in range(m_distcorr.n_submodels):
+                    if isinstance(m_distcorr[i], models.Mapping):
+                        break
                 else:
-                    m_dummy = models.Identity(2)
+                    raise ValueError("Cannot find Mapping")
 
-                m_dummy.inverse = m_distcorr.inverse
-                new_pipeline.append((prev_frame, m_dummy))
+                # Now determine the extent of the submodel that encompasses the
+                # overall 2D distortion, which will be a 2D->2D model
+                for j in range(i + 1, m_distcorr.n_submodels + 1):
+                    try:
+                        msub = m_distcorr[i:j]
+                    except IndexError:
+                        continue
+                    if msub.n_inputs == msub.n_outputs == 2:
+                        break
+                else:
+                    raise ValueError("Cannot find distortion model")
+
+                # Name it so we can replace it
+                m_distcorr[i:j].name = "DISTCORR"
+                m_dummy = models.Identity(2)
+                m_dummy.inverse = msub.inverse
+                new_m_distcorr = m_distcorr.replace_submodel("DISTCORR", m_dummy)
+                new_pipeline.append((prev_frame, new_m_distcorr))
                 new_pipeline.extend(ext.wcs.pipeline[idx:])
-
                 ext.wcs = gWCS(new_pipeline)
 
             if not have_distcorr:
