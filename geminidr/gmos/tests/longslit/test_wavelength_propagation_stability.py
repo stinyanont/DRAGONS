@@ -82,7 +82,10 @@ def test_spectral_wcs_stability(science, arc, path_to_inputs):
 
         # Systematic shifts are likely to be a full pixel, especially with a
         # Central Spectrum science and Full Frame arc, so we can have a modest
-        # tolerance for an absolute shift here.
+        # tolerance for an absolute shift here. Also check the number of
+        # matches since it's possible that a large shift might match a few
+        # lines incorrectly with a fortuitously small apparent shift.
+        assert len(diffs) > 55
         mean, median, stddev = sigma_clipped_stats(diffs)
         assert abs(mean) < 0.1 * dw
 
